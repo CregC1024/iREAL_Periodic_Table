@@ -1,0 +1,94 @@
+<header class="toolbar">
+  <h1>Periodic Table</h1>
+  <input
+    class="search"
+    type="search"
+    placeholder="Search name, symbol or number…"
+    [ngModel]="query()"
+    (ngModelChange)="query.set($event)"
+  />
+  <div class="phases">
+    @for (p of phases; track p) {
+      <button class="chip" [class.active]="phase() === p" (click)="togglePhase(p)">{{ p }}</button>
+    }
+  </div>
+  @if (filtering()) {
+    <span class="count">{{ matchCount() }} match{{ matchCount() === 1 ? '' : 'es' }}</span>
+    <button class="chip clear" (click)="clearFilters()">Clear</button>
+  }
+</header>
+
+<main>
+  <section class="table" (mouseleave)="hovered.set(null)">
+    @for (e of elements(); track e.number) {
+      <button
+        class="cell {{ slug(e.category) }}"
+        [style.grid-column]="e.xpos"
+        [style.grid-row]="e.ypos"
+        [class.dimmed]="isDimmed(e)"
+        [class.selected]="selected()?.number === e.number"
+        (click)="select(e)"
+        (mouseenter)="hovered.set(e)"
+        [attr.aria-label]="e.name"
+      >
+        <span class="num">{{ e.number }}</span>
+        <span class="sym">{{ e.symbol }}</span>
+        <span class="name">{{ e.name }}</span>
+      </button>
+    }
+    <div class="marker" style="grid-column: 3; grid-row: 6">57–71</div>
+    <div class="marker" style="grid-column: 3; grid-row: 7">89–103</div>
+
+    <aside class="preview" style="grid-column: 4 / 13; grid-row: 1 / 4">
+      @if (info(); as e) {
+        <div class="preview-card {{ slug(e.category) }}">
+          <div class="big-sym">{{ e.symbol }}</div>
+          <div>
+            <div class="preview-name">{{ e.name }} <small>#{{ e.number }}</small></div>
+            <div class="preview-meta">{{ e.category }} · {{ e.phase }} · <span class="nocap">{{ e.atomic_mass }} u</span></div>
+            <div class="preview-meta mono">{{ e.electron_configuration }}</div>
+          </div>
+        </div>
+      } @else {
+        <p class="hint">Hover an element for a quick look, click to pin details.</p>
+      }
+    </aside>
+  </section>
+
+  <aside class="legend">
+    @for (c of categories(); track c) {
+      <button class="legend-item" [class.active]="category() === c" (click)="toggleCategory(c)">
+        <span class="swatch {{ slug(c) }}"></span>{{ c }}
+      </button>
+    }
+  </aside>
+</main>
+
+@if (selected(); as e) {
+  <div class="backdrop" (click)="selected.set(null)"></div>
+  <section class="detail {{ slug(e.category) }}" role="dialog" [attr.aria-label]="e.name + ' details'">
+    <header>
+      <button class="nav" (click)="navigate(-1)" [disabled]="e.number === 1">‹</button>
+      <div class="detail-title">
+        <span class="detail-sym">{{ e.symbol }}</span>
+        <div>
+          <h2>{{ e.name }}</h2>
+          <span class="detail-cat">{{ e.category }}</span>
+        </div>
+      </div>
+      <button class="nav" (click)="navigate(1)" [disabled]="e.number === 118">›</button>
+      <button class="close" (click)="selected.set(null)" aria-label="Close">×</button>
+    </header>
+    <dl>
+      <dt>Atomic number</dt><dd>{{ e.number }}</dd>
+      <dt>Atomic mass</dt><dd><span class="nocap">{{ e.atomic_mass }} u</span></dd>
+      <dt>Period / Group</dt><dd>{{ e.period }} / {{ e.group ?? '—' }}</dd>
+      <dt>Block</dt><dd><span class="nocap">{{ e.block }}-block</span></dd>
+      <dt>Phase (STP)</dt><dd>{{ e.phase }}</dd>
+      <dt>Electron config.</dt><dd class="mono">{{ e.electron_configuration }}</dd>
+      <dt>Electronegativity</dt><dd>{{ e.electronegativity ?? '—' }}</dd>
+      <dt>Discovered</dt><dd>{{ e.discovered ?? 'Ancient' }}</dd>
+    </dl>
+    <p class="summary">{{ e.summary }}</p>
+  </section>
+}
